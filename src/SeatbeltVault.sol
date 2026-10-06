@@ -35,7 +35,7 @@ contract SeatbeltVault {
     address public immutable owner;
     address public immutable agent;
     uint256 public immutable windowLength; // seconds
-    uint256 public immutable maxDenials;   // denials per window before auto-freeze
+    uint256 public immutable maxDenials; // denials per window before auto-freeze
 
     uint256 public budgetPerWindow;
     uint256 public perTxCap;
@@ -63,16 +63,11 @@ contract SeatbeltVault {
     }
 
     // ----------------------------------------------------------- constructor
-    constructor(
-        address _agent,
-        uint256 _budgetPerWindow,
-        uint256 _perTxCap,
-        uint256 _windowLength,
-        uint256 _maxDenials
-    ) payable {
+    constructor(address _agent, uint256 _budgetPerWindow, uint256 _perTxCap, uint256 _windowLength, uint256 _maxDenials)
+        payable {
         if (
-            _agent == address(0) || _budgetPerWindow == 0 || _perTxCap == 0 ||
-            _perTxCap > _budgetPerWindow || _windowLength == 0 || _maxDenials == 0
+            _agent == address(0) || _budgetPerWindow == 0 || _perTxCap == 0 || _perTxCap > _budgetPerWindow
+                || _windowLength == 0 || _maxDenials == 0
         ) revert BadConfig();
 
         owner = msg.sender;
@@ -92,11 +87,7 @@ contract SeatbeltVault {
 
     // ------------------------------------------------------------ agent side
     /// @notice The agent's only power. Returns true if paid, false if denied.
-    function spend(address payable to, uint256 amount)
-        external
-        nonReentrant
-        returns (bool)
-    {
+    function spend(address payable to, uint256 amount) external nonReentrant returns (bool) {
         if (msg.sender != agent) revert NotAgent();
         if (frozen) revert IsFrozen();
 
@@ -108,7 +99,7 @@ contract SeatbeltVault {
         if (amount > address(this).balance) return _deny(to, amount, DENY_INSUFFICIENT_BALANCE);
 
         spentInWindow += amount; // effects before interaction
-        (bool ok, ) = to.call{value: amount}("");
+        (bool ok,) = to.call{value: amount}("");
         if (!ok) revert TransferFailed();
 
         emit Spent(to, amount, spentInWindow);
@@ -140,7 +131,7 @@ contract SeatbeltVault {
     }
 
     function withdraw(uint256 amount) external onlyOwner nonReentrant {
-        (bool ok, ) = payable(owner).call{value: amount}("");
+        (bool ok,) = payable(owner).call{value: amount}("");
         if (!ok) revert TransferFailed();
         emit Withdrawn(amount);
     }
